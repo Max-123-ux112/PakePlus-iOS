@@ -1,0 +1,1831 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes" />
+    <title>炼化设备维护 · 多人协作派工系统</title>
+    <style>
+        /* ===== CSS 变量 & 重置 ===== */
+        :root {
+            --primary: #1a5fb4;
+            --primary-light: #3584e4;
+            --primary-dark: #0d3b7a;
+            --success: #26a269;
+            --warning: #e66100;
+            --danger: #c01c28;
+            --info: #1a7a9e;
+            --gray-50: #f6f7f9;
+            --gray-100: #e8eaed;
+            --gray-200: #d0d4da;
+            --gray-300: #b0b6c0;
+            --gray-600: #5e6778;
+            --gray-800: #2e3440;
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            --radius: 14px;
+            --radius-sm: 8px;
+            --transition: 0.25s ease;
+            --font: 'Segoe UI', 'PingFang SC', Roboto, system-ui, -apple-system, sans-serif;
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: var(--font);
+            background: var(--gray-50);
+            color: var(--gray-800);
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .app-container {
+            max-width: 1500px;
+            width: 100%;
+        }
+
+        /* ===== 顶部标题栏 ===== */
+        .app-header {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            background: white;
+            padding: 16px 28px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            margin-bottom: 28px;
+            border-left: 6px solid var(--primary);
+        }
+        .app-header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .app-header h1 span {
+            background: var(--primary);
+            color: white;
+            font-size: 14px;
+            font-weight: 500;
+            padding: 2px 12px;
+            border-radius: 30px;
+            margin-left: 6px;
+        }
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            flex-wrap: wrap;
+        }
+        .header-date {
+            font-size: 16px;
+            color: var(--gray-600);
+            background: var(--gray-50);
+            padding: 6px 16px;
+            border-radius: 30px;
+            font-weight: 500;
+        }
+        .btn-reset,
+        .btn-settings {
+            background: transparent;
+            border: 1.5px solid var(--gray-200);
+            padding: 6px 18px;
+            border-radius: 30px;
+            font-size: 14px;
+            color: var(--gray-600);
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 500;
+        }
+        .btn-reset:hover {
+            border-color: var(--danger);
+            color: var(--danger);
+            background: #fef0f0;
+        }
+        .btn-settings:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: #f0f4ff;
+        }
+
+        /* ===== 班组网格 ===== */
+        .groups-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 24px;
+            margin-bottom: 30px;
+        }
+
+        /* ===== 班组卡片 ===== */
+        .group-card {
+            background: white;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            transition: transform 0.2s;
+            border-top: 5px solid var(--primary);
+            display: flex;
+            flex-direction: column;
+        }
+        .group-card:hover {
+            transform: translateY(-2px);
+        }
+        .group-card-header {
+            padding: 18px 22px 12px 22px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--gray-100);
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .group-name {
+            font-size: 20px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .group-name .badge {
+            font-size: 13px;
+            font-weight: 500;
+            background: var(--gray-100);
+            padding: 2px 12px;
+            border-radius: 30px;
+            color: var(--gray-600);
+        }
+        .group-actions {
+            display: flex;
+            gap: 8px;
+        }
+        .group-actions button {
+            background: var(--gray-50);
+            border: none;
+            padding: 6px 14px;
+            border-radius: 30px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--gray-600);
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .group-actions button:hover {
+            background: var(--primary);
+            color: white;
+        }
+        .group-actions button.add-btn:hover {
+            background: var(--success);
+        }
+        .group-actions button.team-btn {
+            background: #eaf3ff;
+            color: var(--primary);
+        }
+        .group-actions button.team-btn:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* ===== 统计数字 ===== */
+        .stats-row {
+            display: flex;
+            justify-content: space-around;
+            padding: 16px 22px 14px 22px;
+            background: var(--gray-50);
+            border-bottom: 1px solid var(--gray-100);
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .stat-item {
+            text-align: center;
+            flex: 1;
+            min-width: 60px;
+        }
+        .stat-number {
+            font-size: 30px;
+            font-weight: 700;
+            line-height: 1.2;
+            letter-spacing: -0.5px;
+        }
+        .stat-number.total {
+            color: var(--primary-dark);
+        }
+        .stat-number.out {
+            color: var(--warning);
+        }
+        .stat-number.leave {
+            color: var(--info);
+        }
+        .stat-number.in {
+            color: var(--success);
+        }
+        .stat-label {
+            font-size: 13px;
+            color: var(--gray-600);
+            font-weight: 500;
+            margin-top: 2px;
+        }
+        .stat-divider {
+            width: 1px;
+            background: var(--gray-200);
+        }
+
+        /* ===== 人员列表 ===== */
+        .member-list {
+            padding: 12px 16px 16px 16px;
+            flex: 1;
+            max-height: 520px;
+            overflow-y: auto;
+        }
+        .member-list::-webkit-scrollbar {
+            width: 5px;
+        }
+        .member-list::-webkit-scrollbar-thumb {
+            background: var(--gray-300);
+            border-radius: 10px;
+        }
+
+        .member-item {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            padding: 10px 14px;
+            border-radius: var(--radius-sm);
+            margin-bottom: 6px;
+            background: var(--gray-50);
+            transition: var(--transition);
+            border-left: 4px solid transparent;
+            gap: 8px 12px;
+        }
+        .member-item.status-in {
+            border-left-color: var(--success);
+        }
+        .member-item.status-out {
+            border-left-color: var(--warning);
+            background: #fff8f0;
+        }
+        .member-item.status-returned {
+            border-left-color: var(--gray-300);
+            background: var(--gray-50);
+            opacity: 0.85;
+        }
+        .member-item.status-leave {
+            border-left-color: var(--info);
+            background: #f0f6fe;
+        }
+
+        .member-name {
+            font-weight: 600;
+            font-size: 16px;
+            min-width: 50px;
+            flex: 0 0 auto;
+        }
+        .member-status-badge {
+            font-size: 12px;
+            font-weight: 600;
+            padding: 2px 12px;
+            border-radius: 30px;
+            background: var(--gray-200);
+            color: var(--gray-600);
+            flex: 0 0 auto;
+        }
+        .member-status-badge.in {
+            background: #d3f0df;
+            color: #1a6e3e;
+        }
+        .member-status-badge.out {
+            background: #fde4c8;
+            color: #b85c00;
+        }
+        .member-status-badge.returned {
+            background: var(--gray-200);
+            color: var(--gray-600);
+        }
+        .member-status-badge.leave {
+            background: #d4e4f7;
+            color: #1a5a7a;
+        }
+
+        .member-detail {
+            font-size: 14px;
+            color: var(--gray-600);
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 6px 16px;
+            flex: 1 1 auto;
+            min-width: 140px;
+        }
+        .member-detail .loc {
+            font-weight: 500;
+            color: var(--gray-800);
+            background: white;
+            padding: 0 10px 0 0;
+        }
+        .member-detail .time-tag {
+            background: white;
+            padding: 2px 10px;
+            border-radius: 30px;
+            font-size: 13px;
+            white-space: nowrap;
+            border: 1px solid var(--gray-200);
+        }
+        .member-detail .time-tag.arrive {
+            border-color: #b8d4f0;
+            color: var(--primary-dark);
+        }
+        .member-detail .time-tag.leave {
+            border-color: #e0d0c0;
+            color: #7a5a3a;
+        }
+        .member-detail .team-badge {
+            background: #eaf3ff;
+            padding: 2px 12px;
+            border-radius: 30px;
+            font-size: 13px;
+            color: var(--primary-dark);
+            border: 1px solid #b8d4f0;
+            white-space: nowrap;
+            max-width: 280px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .member-detail .task-badge {
+            background: #f0f7e8;
+            padding: 2px 12px;
+            border-radius: 30px;
+            font-size: 13px;
+            color: #2d6a1a;
+            border: 1px solid #b8d9a0;
+            white-space: nowrap;
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .member-ops {
+            display: flex;
+            gap: 5px;
+            flex: 0 0 auto;
+            margin-left: auto;
+            flex-wrap: wrap;
+        }
+        .member-ops button {
+            border: none;
+            background: white;
+            padding: 4px 12px;
+            border-radius: 30px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            border: 1px solid var(--gray-200);
+            color: var(--gray-600);
+            white-space: nowrap;
+        }
+        .member-ops button:hover {
+            transform: scale(1.03);
+        }
+        .member-ops .btn-out {
+            background: var(--warning);
+            border-color: var(--warning);
+            color: white;
+        }
+        .member-ops .btn-out:hover {
+            background: #d45a00;
+        }
+        .member-ops .btn-in {
+            background: var(--success);
+            border-color: var(--success);
+            color: white;
+        }
+        .member-ops .btn-in:hover {
+            background: #1d8a4e;
+        }
+        .member-ops .btn-leave {
+            background: var(--info);
+            border-color: var(--info);
+            color: white;
+        }
+        .member-ops .btn-leave:hover {
+            background: #0e5f7a;
+        }
+        .member-ops .btn-edit {
+            background: var(--gray-100);
+            border-color: var(--gray-300);
+        }
+        .member-ops .btn-edit:hover {
+            background: var(--primary-light);
+            border-color: var(--primary-light);
+            color: white;
+        }
+        .member-ops .btn-del {
+            background: transparent;
+            border-color: transparent;
+            color: var(--danger);
+        }
+        .member-ops .btn-del:hover {
+            background: #fde8ea;
+            border-color: var(--danger);
+        }
+
+        .empty-tip {
+            text-align: center;
+            color: var(--gray-300);
+            padding: 30px 10px;
+            font-size: 15px;
+        }
+
+        /* ===== 模态框 ===== */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.45);
+            backdrop-filter: blur(4px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
+            padding: 20px;
+            animation: fadeIn 0.2s;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal-box {
+            background: white;
+            border-radius: var(--radius);
+            max-width: 680px;
+            width: 100%;
+            padding: 28px 32px 32px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+            animation: slideUp 0.25s;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .modal-box h3 {
+            font-size: 20px;
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .modal-box h3 .sub {
+            font-weight: 400;
+            font-size: 15px;
+            color: var(--gray-600);
+        }
+        .modal-form label {
+            display: block;
+            font-weight: 600;
+            font-size: 14px;
+            margin-top: 14px;
+            margin-bottom: 4px;
+            color: var(--gray-800);
+        }
+        .modal-form input,
+        .modal-form select {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1.5px solid var(--gray-200);
+            border-radius: var(--radius-sm);
+            font-size: 15px;
+            font-family: var(--font);
+            transition: var(--transition);
+            background: white;
+        }
+        .modal-form input:focus,
+        .modal-form select:focus {
+            outline: none;
+            border-color: var(--primary-light);
+            box-shadow: 0 0 0 3px rgba(53, 132, 228, 0.15);
+        }
+        .modal-form .hint {
+            font-size: 13px;
+            color: var(--gray-600);
+            margin-top: 4px;
+        }
+        .modal-form .checkbox-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+            gap: 6px;
+            margin-top: 6px;
+            max-height: 180px;
+            overflow-y: auto;
+            padding: 8px 10px;
+            background: var(--gray-50);
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--gray-200);
+        }
+        .modal-form .checkbox-grid label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 400;
+            font-size: 14px;
+            margin: 0;
+            padding: 4px 6px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .modal-form .checkbox-grid label:hover {
+            background: var(--gray-100);
+        }
+        .modal-form .checkbox-grid input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--primary);
+            margin: 0;
+        }
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+            justify-content: flex-end;
+        }
+        .modal-actions button {
+            padding: 10px 28px;
+            border: none;
+            border-radius: 30px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .modal-actions .btn-cancel {
+            background: var(--gray-100);
+            color: var(--gray-600);
+        }
+        .modal-actions .btn-cancel:hover {
+            background: var(--gray-200);
+        }
+        .modal-actions .btn-confirm {
+            background: var(--primary);
+            color: white;
+        }
+        .modal-actions .btn-confirm:hover {
+            background: var(--primary-dark);
+        }
+        .modal-actions .btn-confirm.danger {
+            background: var(--danger);
+        }
+        .modal-actions .btn-confirm.danger:hover {
+            background: #a01822;
+        }
+        .modal-actions .btn-confirm.success {
+            background: var(--success);
+        }
+        .modal-actions .btn-confirm.success:hover {
+            background: #1d8a4e;
+        }
+
+        /* ===== 设置面板 ===== */
+        .settings-section {
+            margin-bottom: 24px;
+            border-bottom: 1px solid var(--gray-100);
+            padding-bottom: 18px;
+        }
+        .settings-section:last-of-type {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+        .settings-section h4 {
+            font-size: 17px;
+            margin-bottom: 12px;
+            color: var(--gray-800);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .settings-item-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px 12px;
+            margin-bottom: 8px;
+        }
+        .settings-item {
+            background: var(--gray-50);
+            padding: 4px 12px 4px 16px;
+            border-radius: 30px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid var(--gray-200);
+            font-size: 14px;
+        }
+        .settings-item .del-item {
+            background: transparent;
+            border: none;
+            color: var(--danger);
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 16px;
+            line-height: 1;
+            padding: 0 2px;
+        }
+        .settings-item .del-item:hover {
+            transform: scale(1.2);
+        }
+        .settings-add-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 6px;
+        }
+        .settings-add-row input {
+            flex: 1;
+            padding: 6px 12px;
+            border: 1.5px solid var(--gray-200);
+            border-radius: 30px;
+            font-size: 14px;
+        }
+        .settings-add-row button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 6px 18px;
+            border-radius: 30px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 14px;
+        }
+        .settings-add-row button:hover {
+            background: var(--primary-dark);
+        }
+        .settings-subnote {
+            font-size: 13px;
+            color: var(--gray-600);
+            margin-top: 4px;
+        }
+        .settings-toolbar {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 18px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid var(--gray-200);
+        }
+        .settings-toolbar button {
+            background: var(--gray-50);
+            border: 1px solid var(--gray-200);
+            padding: 6px 18px;
+            border-radius: 30px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            color: var(--gray-600);
+        }
+        .settings-toolbar button:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        .settings-toolbar .btn-default {
+            border-color: var(--warning);
+            color: var(--warning);
+        }
+        .settings-toolbar .btn-default:hover {
+            background: var(--warning);
+            color: white;
+            border-color: var(--warning);
+        }
+
+        .app-footer {
+            text-align: center;
+            color: var(--gray-300);
+            font-size: 14px;
+            padding: 18px 0 4px 0;
+            border-top: 1px solid var(--gray-100);
+            margin-top: 10px;
+            width: 100%;
+        }
+
+        /* ===== 响应式 ===== */
+        @media (max-width: 820px) {
+            .groups-grid {
+                grid-template-columns: 1fr;
+            }
+            .app-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+                padding: 16px 20px;
+            }
+            .app-header h1 {
+                font-size: 20px;
+            }
+            .header-right {
+                width: 100%;
+                justify-content: space-between;
+            }
+            .stats-row {
+                padding: 12px 14px;
+            }
+            .stat-number {
+                font-size: 26px;
+            }
+            .member-item {
+                padding: 8px 10px;
+                flex-direction: column;
+                align-items: stretch;
+                gap: 6px;
+            }
+            .member-ops {
+                margin-left: 0;
+                justify-content: flex-start;
+                flex-wrap: wrap;
+            }
+            .member-detail {
+                min-width: unset;
+                font-size: 13px;
+            }
+            .modal-box {
+                padding: 20px 18px;
+                margin: 10px;
+            }
+            .group-card-header {
+                padding: 14px 16px 10px 16px;
+            }
+            .member-list {
+                max-height: 360px;
+                padding: 8px 10px 12px 10px;
+            }
+            .modal-form .checkbox-grid {
+                grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            }
+            .member-detail .team-badge,
+            .member-detail .task-badge {
+                max-width: 150px;
+            }
+        }
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+            .app-header h1 {
+                font-size: 18px;
+                flex-wrap: wrap;
+            }
+            .stat-number {
+                font-size: 22px;
+            }
+            .stat-label {
+                font-size: 12px;
+            }
+            .member-name {
+                font-size: 15px;
+            }
+            .modal-actions {
+                flex-direction: column;
+            }
+            .modal-actions button {
+                width: 100%;
+                justify-content: center;
+            }
+            .settings-toolbar {
+                flex-direction: column;
+            }
+            .member-detail .team-badge,
+            .member-detail .task-badge {
+                max-width: 120px;
+                font-size: 12px;
+            }
+        }
+        .hidden {
+            display: none !important;
+        }
+        .text-muted {
+            color: var(--gray-600);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container" id="app">
+        <header class="app-header">
+            <h1>
+                🔧 维护派工系统
+                <span>多人协作</span>
+            </h1>
+            <div class="header-right">
+                <div class="header-date" id="headerDate"></div>
+                <button class="btn-settings" id="openSettingsBtn">⚙️ 设置</button>
+                <button class="btn-reset" id="resetTodayBtn" title="重置所有派出记录，同时取消所有休假">🔄 重置今日</button>
+            </div>
+        </header>
+
+        <div class="groups-grid" id="groupsGrid"></div>
+
+        <footer class="app-footer">
+            数据自动保存在本地 · 支持多人协作派工 · 人数不设上限
+        </footer>
+    </div>
+
+    <!-- ===== 模态框 ===== -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal-box" id="modalBox">
+            <h3 id="modalTitle">操作</h3>
+            <div class="modal-form" id="modalForm"></div>
+            <div class="modal-actions">
+                <button class="btn-cancel" id="modalCancel">取消</button>
+                <button class="btn-confirm" id="modalConfirm">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ================================================================
+        // 1. 数据层
+        // ================================================================
+
+        const STORAGE_KEY = 'dispatching_system_data_v4';
+        const GROUP_NAMES = ['管铆焊班', '钳工一班', '钳工二班'];
+
+        const DEFAULT_PRESET_LOCATIONS = [
+            '常减压装置', '催化裂化装置', '加氢装置', '重整装置',
+            '焦化装置', '硫磺回收装置', '公用工程', '罐区', '其他'
+        ];
+
+        const DEFAULT_MEMBERS = {
+            '管铆焊班': ['张伟', '李强', '王磊', '刘洋', '陈刚'],
+            '钳工一班': ['赵明', '孙鹏', '周涛', '吴亮', '郑杰'],
+            '钳工二班': ['钱军', '冯伟', '蒋勇', '韩磊', '沈健']
+        };
+
+        let appData = null;
+        let presetLocations = [];
+
+        function generateId() {
+            return Date.now().toString(36) + '_' + Math.random().toString(36).substr(2, 6);
+        }
+
+        function loadData() {
+            const stored = localStorage.getItem(STORAGE_KEY);
+            if (stored) {
+                try {
+                    const parsed = JSON.parse(stored);
+                    if (parsed && parsed.groups && parsed.presetLocations) {
+                        appData = parsed;
+                        presetLocations = parsed.presetLocations || [];
+                        let needSave = false;
+                        GROUP_NAMES.forEach(g => {
+                            if (!appData.groups[g]) {
+                                appData.groups[g] = { members: [] };
+                                needSave = true;
+                            }
+                            appData.groups[g].members.forEach(m => {
+                                if (!m.id) { m.id = generateId();
+                                    needSave = true; }
+                                if (!m.status) { m.status = 'in';
+                                    needSave = true; }
+                                if (!m.location) m.location = '';
+                                if (!m.arriveTime) m.arriveTime = '';
+                                if (!m.leaveTime) m.leaveTime = '';
+                                if (!m.teamMembers) m.teamMembers = [];
+                                if (!m.taskName) m.taskName = '';
+                            });
+                        });
+                        if (needSave) saveData();
+                        return;
+                    }
+                } catch (e) { /* 数据损坏则重建 */ }
+            }
+            presetLocations = [...DEFAULT_PRESET_LOCATIONS];
+            appData = { groups: {}, presetLocations: presetLocations };
+            GROUP_NAMES.forEach(g => {
+                const names = DEFAULT_MEMBERS[g] || [];
+                appData.groups[g] = {
+                    members: names.map(name => ({
+                        id: generateId(),
+                        name: name,
+                        status: 'in',
+                        location: '',
+                        arriveTime: '',
+                        leaveTime: '',
+                        teamMembers: [],
+                        taskName: ''
+                    }))
+                };
+            });
+            saveData();
+        }
+
+        function saveData() {
+            appData.presetLocations = presetLocations;
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+        }
+
+        function restoreDefaultSettings() {
+            if (!confirm('⚠️ 确定要恢复默认设置吗？\n这将重置所有成员名单和预设地点，当前数据将被覆盖！')) {
+                return false;
+            }
+            presetLocations = [...DEFAULT_PRESET_LOCATIONS];
+            appData.groups = {};
+            GROUP_NAMES.forEach(g => {
+                const names = DEFAULT_MEMBERS[g] || [];
+                appData.groups[g] = {
+                    members: names.map(name => ({
+                        id: generateId(),
+                        name: name,
+                        status: 'in',
+                        location: '',
+                        arriveTime: '',
+                        leaveTime: '',
+                        teamMembers: [],
+                        taskName: ''
+                    }))
+                };
+            });
+            saveData();
+            renderAll();
+            return true;
+        }
+
+        // ================================================================
+        // 2. 业务逻辑
+        // ================================================================
+
+        function getGroup(groupName) { return appData.groups[groupName]; }
+
+        function getMembers(groupName) { return getGroup(groupName).members; }
+
+        function findMember(groupName, memberId) {
+            return getMembers(groupName).find(m => m.id === memberId);
+        }
+
+        function addMember(groupName, name) {
+            const members = getMembers(groupName);
+            const newMember = {
+                id: generateId(),
+                name: name.trim(),
+                status: 'in',
+                location: '',
+                arriveTime: '',
+                leaveTime: '',
+                teamMembers: [],
+                taskName: ''
+            };
+            members.push(newMember);
+            saveData();
+            return newMember;
+        }
+
+        function deleteMember(groupName, memberId) {
+            const members = getMembers(groupName);
+            const idx = members.findIndex(m => m.id === memberId);
+            if (idx !== -1) {
+                members.splice(idx, 1);
+                saveData();
+                return true;
+            }
+            return false;
+        }
+
+        function editMemberName(groupName, memberId, newName) {
+            const m = findMember(groupName, memberId);
+            if (m) {
+                m.name = newName.trim();
+                saveData();
+                return true;
+            }
+            return false;
+        }
+
+        // 多人派工：一次派出多个成员
+        function dispatchTeam(groupName, memberIds, location, arriveTime, taskName) {
+            const members = getMembers(groupName);
+            const selectedMembers = members.filter(m => memberIds.includes(m.id));
+            if (selectedMembers.length === 0) return false;
+
+            // 为每个人记录完整的团队信息（包含自己以外的所有成员）
+            const allTeamNames = selectedMembers.map(m => m.name);
+            selectedMembers.forEach(m => {
+                m.status = 'out';
+                m.location = location.trim();
+                m.arriveTime = arriveTime || new Date().toLocaleString('zh-CN', { hour12: false });
+                m.leaveTime = '';
+                // 存储除了自己以外的团队成员名字
+                m.teamMembers = allTeamNames.filter(name => name !== m.name);
+                m.taskName = taskName || '';
+            });
+            saveData();
+            return true;
+        }
+
+        function recallMember(groupName, memberId, leaveTime) {
+            const m = findMember(groupName, memberId);
+            if (!m || m.status !== 'out') return false;
+            m.status = 'returned';
+            m.leaveTime = leaveTime || new Date().toLocaleString('zh-CN', { hour12: false });
+            saveData();
+            return true;
+        }
+
+        function setMemberLeave(groupName, memberId) {
+            const m = findMember(groupName, memberId);
+            if (!m) return false;
+            if (m.status === 'out') {
+                alert('该成员正在外出，请先召回再设为休假。');
+                return false;
+            }
+            m.status = 'leave';
+            m.location = '';
+            m.arriveTime = '';
+            m.leaveTime = '';
+            m.teamMembers = [];
+            m.taskName = '';
+            saveData();
+            return true;
+        }
+
+        function cancelMemberLeave(groupName, memberId) {
+            const m = findMember(groupName, memberId);
+            if (!m || m.status !== 'leave') return false;
+            m.status = 'in';
+            m.location = '';
+            m.arriveTime = '';
+            m.leaveTime = '';
+            m.teamMembers = [];
+            m.taskName = '';
+            saveData();
+            return true;
+        }
+
+        function resetToday(groupName) {
+            const members = getMembers(groupName);
+            members.forEach(m => {
+                m.status = 'in';
+                m.location = '';
+                m.arriveTime = '';
+                m.leaveTime = '';
+                m.teamMembers = [];
+                m.taskName = '';
+            });
+            saveData();
+        }
+
+        function resetAllToday() {
+            GROUP_NAMES.forEach(g => resetToday(g));
+        }
+
+        function getStats(groupName) {
+            const members = getMembers(groupName);
+            const total = members.length;
+            const outCount = members.filter(m => m.status === 'out').length;
+            const returnedCount = members.filter(m => m.status === 'returned').length;
+            const leaveCount = members.filter(m => m.status === 'leave').length;
+            const dispatched = outCount + returnedCount;
+            const available = total - dispatched - leaveCount;
+            return { total, outCount, returnedCount, leaveCount, dispatched, available };
+        }
+
+        // ================================================================
+        // 3. 渲染
+        // ================================================================
+
+        const groupsGrid = document.getElementById('groupsGrid');
+
+        function renderAll() {
+            let html = '';
+            GROUP_NAMES.forEach(groupName => {
+                html += renderGroupCard(groupName);
+            });
+            groupsGrid.innerHTML = html;
+            document.getElementById('headerDate').textContent = '📅 ' + new Date().toLocaleDateString('zh-CN', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                weekday: 'short'
+            });
+            bindGroupEvents();
+        }
+
+        function renderGroupCard(groupName) {
+            const members = getMembers(groupName);
+            const stats = getStats(groupName);
+            const { total, dispatched, leaveCount, available } = stats;
+
+            let membersHtml = '';
+            if (members.length === 0) {
+                membersHtml = `<div class="empty-tip">暂无成员，点击上方「➕」添加</div>`;
+            } else {
+                members.forEach(m => {
+                    membersHtml += renderMemberItem(groupName, m);
+                });
+            }
+
+            let borderColor = 'var(--primary)';
+            if (leaveCount > 0) borderColor = 'var(--info)';
+            if (dispatched === total && total > 0) borderColor = 'var(--warning)';
+
+            return `
+                <div class="group-card" style="border-top-color:${borderColor};" data-group="${groupName}">
+                    <div class="group-card-header">
+                        <div class="group-name">
+                            ${groupName}
+                            <span class="badge">${total}人</span>
+                        </div>
+                        <div class="group-actions">
+                            <button class="add-btn" data-group="${groupName}" data-action="add">➕ 添加</button>
+                            <button class="team-btn" data-group="${groupName}" data-action="dispatchTeam">👥 多人派工</button>
+                            <button data-group="${groupName}" data-action="reset" title="重置本班今日派出及休假">🔄 重置</button>
+                        </div>
+                    </div>
+
+                    <div class="stats-row">
+                        <div class="stat-item">
+                            <div class="stat-number total">${total}</div>
+                            <div class="stat-label">👥 总人数</div>
+                        </div>
+                        <div class="stat-divider"></div>
+                        <div class="stat-item">
+                            <div class="stat-number out">${dispatched}</div>
+                            <div class="stat-label">📤 已派出</div>
+                        </div>
+                        <div class="stat-divider"></div>
+                        <div class="stat-item">
+                            <div class="stat-number leave">${leaveCount}</div>
+                            <div class="stat-label">🔵 休假</div>
+                        </div>
+                        <div class="stat-divider"></div>
+                        <div class="stat-item">
+                            <div class="stat-number in">${available}</div>
+                            <div class="stat-label">🟢 在岗可派</div>
+                        </div>
+                    </div>
+
+                    <div class="member-list">
+                        ${membersHtml}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderMemberItem(groupName, member) {
+            const { id, name, status, location, arriveTime, leaveTime, teamMembers, taskName } = member;
+
+            let statusClass = 'status-in';
+            let badgeText = '🟢 在岗';
+            let badgeClass = 'in';
+            let detailHtml = '';
+
+            if (status === 'out') {
+                statusClass = 'status-out';
+                badgeText = '⏳ 外出';
+                badgeClass = 'out';
+                const locDisplay = location || '未指定地点';
+                const arriveDisplay = arriveTime || '--:--';
+                // 显示协作团队（不含自己）
+                const teamDisplay = teamMembers && teamMembers.length > 0 ?
+                    `👥 ${teamMembers.join('、')}` : '';
+                const taskDisplay = taskName ? `📋 ${taskName}` : '';
+                detailHtml = `
+                    <span class="loc">📍 ${locDisplay}</span>
+                    <span class="time-tag arrive">🕐 到达 ${arriveDisplay}</span>
+                    ${taskDisplay ? `<span class="task-badge">${taskDisplay}</span>` : ''}
+                    ${teamDisplay ? `<span class="team-badge">${teamDisplay}</span>` : ''}
+                `;
+            } else if (status === 'returned') {
+                statusClass = 'status-returned';
+                badgeText = '✅ 已返';
+                badgeClass = 'returned';
+                const locDisplay = location || '未指定地点';
+                const arriveDisplay = arriveTime || '--:--';
+                const leaveDisplay = leaveTime || '--:--';
+                const teamDisplay = teamMembers && teamMembers.length > 0 ?
+                    `👥 ${teamMembers.join('、')}` : '';
+                const taskDisplay = taskName ? `📋 ${taskName}` : '';
+                detailHtml = `
+                    <span class="loc">📍 ${locDisplay}</span>
+                    <span class="time-tag arrive">🕐 到达 ${arriveDisplay}</span>
+                    <span class="time-tag leave">🕒 离开 ${leaveDisplay}</span>
+                    ${taskDisplay ? `<span class="task-badge">${taskDisplay}</span>` : ''}
+                    ${teamDisplay ? `<span class="team-badge">${teamDisplay}</span>` : ''}
+                `;
+            } else if (status === 'leave') {
+                statusClass = 'status-leave';
+                badgeText = '🔵 休假';
+                badgeClass = 'leave';
+                detailHtml = `<span class="text-muted">📅 休假中</span>`;
+            } else {
+                statusClass = 'status-in';
+                badgeText = '🟢 在岗';
+                badgeClass = 'in';
+                detailHtml = `<span class="text-muted">待派工</span>`;
+            }
+
+            let opsHtml = '';
+            if (status === 'in') {
+                opsHtml = `
+                    <button class="btn-out" data-group="${groupName}" data-id="${id}" data-action="dispatchSingle">派出</button>
+                    <button class="btn-leave" data-group="${groupName}" data-id="${id}" data-action="setLeave">休假</button>
+                    <button class="btn-edit" data-group="${groupName}" data-id="${id}" data-action="edit">✎</button>
+                    <button class="btn-del" data-group="${groupName}" data-id="${id}" data-action="delete">✕</button>
+                `;
+            } else if (status === 'leave') {
+                opsHtml = `
+                    <button class="btn-in" data-group="${groupName}" data-id="${id}" data-action="cancelLeave">取消休假</button>
+                    <button class="btn-edit" data-group="${groupName}" data-id="${id}" data-action="edit">✎</button>
+                    <button class="btn-del" data-group="${groupName}" data-id="${id}" data-action="delete">✕</button>
+                `;
+            } else if (status === 'out') {
+                opsHtml = `
+                    <button class="btn-in" data-group="${groupName}" data-id="${id}" data-action="recall">召回</button>
+                    <button class="btn-edit" data-group="${groupName}" data-id="${id}" data-action="edit">✎</button>
+                    <button class="btn-del" data-group="${groupName}" data-id="${id}" data-action="delete">✕</button>
+                `;
+            } else if (status === 'returned') {
+                opsHtml = `
+                    <button class="btn-out" data-group="${groupName}" data-id="${id}" data-action="dispatchSingle">再次派出</button>
+                    <button class="btn-leave" data-group="${groupName}" data-id="${id}" data-action="setLeave">休假</button>
+                    <button class="btn-edit" data-group="${groupName}" data-id="${id}" data-action="edit">✎</button>
+                    <button class="btn-del" data-group="${groupName}" data-id="${id}" data-action="delete">✕</button>
+                `;
+            }
+
+            return `
+                <div class="member-item ${statusClass}" data-id="${id}">
+                    <span class="member-name">${name}</span>
+                    <span class="member-status-badge ${badgeClass}">${badgeText}</span>
+                    <div class="member-detail">${detailHtml}</div>
+                    <div class="member-ops">${opsHtml}</div>
+                </div>
+            `;
+        }
+
+        // ================================================================
+        // 4. 事件绑定
+        // ================================================================
+
+        function bindGroupEvents() {
+            document.querySelector('.groups-grid').addEventListener('click', function(e) {
+                const target = e.target.closest('button');
+                if (!target) return;
+
+                const group = target.dataset.group;
+                const action = target.dataset.action;
+                const id = target.dataset.id;
+
+                if (!group) return;
+
+                if (action === 'add') {
+                    openAddModal(group);
+                    return;
+                }
+                if (action === 'dispatchTeam') {
+                    openDispatchTeamModal(group);
+                    return;
+                }
+                if (action === 'reset') {
+                    if (confirm(`确定要重置「${group}」今天的全部派出记录并取消所有休假吗？\n（人员名单保留，状态恢复为在岗）`)) {
+                        resetToday(group);
+                        renderAll();
+                    }
+                    return;
+                }
+                if (!id) return;
+
+                if (action === 'delete') {
+                    const m = findMember(group, id);
+                    if (m && confirm(`确定删除「${m.name}」吗？`)) {
+                        deleteMember(group, id);
+                        renderAll();
+                    }
+                    return;
+                }
+                if (action === 'edit') {
+                    const m = findMember(group, id);
+                    if (m) openEditModal(group, id, m.name);
+                    return;
+                }
+                if (action === 'dispatchSingle') {
+                    const m = findMember(group, id);
+                    if (m) openDispatchSingleModal(group, id, m.name);
+                    return;
+                }
+                if (action === 'recall') {
+                    const m = findMember(group, id);
+                    if (m) openRecallModal(group, id, m.name);
+                    return;
+                }
+                if (action === 'setLeave') {
+                    const m = findMember(group, id);
+                    if (m) {
+                        if (m.status === 'out') {
+                            alert('该成员正在外出，请先召回再设为休假。');
+                            return;
+                        }
+                        if (confirm(`将「${m.name}」设为休假状态？`)) {
+                            setMemberLeave(group, id);
+                            renderAll();
+                        }
+                    }
+                    return;
+                }
+                if (action === 'cancelLeave') {
+                    const m = findMember(group, id);
+                    if (m && confirm(`取消「${m.name}」的休假状态，恢复在岗？`)) {
+                        cancelMemberLeave(group, id);
+                        renderAll();
+                    }
+                    return;
+                }
+            });
+        }
+
+        // ================================================================
+        // 5. 模态框管理
+        // ================================================================
+
+        const modalOverlay = document.getElementById('modalOverlay');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalForm = document.getElementById('modalForm');
+        const modalCancel = document.getElementById('modalCancel');
+        const modalConfirm = document.getElementById('modalConfirm');
+
+        let modalResolve = null;
+
+        function openModal(title, formHtml, confirmText, confirmClass) {
+            return new Promise((resolve) => {
+                modalTitle.innerHTML = title;
+                modalForm.innerHTML = formHtml;
+                modalConfirm.textContent = confirmText || '确定';
+                modalConfirm.className = 'btn-confirm' + (confirmClass ? ' ' + confirmClass : '');
+                modalOverlay.classList.add('active');
+                modalResolve = resolve;
+                setTimeout(() => {
+                    const firstInput = modalForm.querySelector('input, select');
+                    if (firstInput) firstInput.focus();
+                }, 100);
+            });
+        }
+
+        function closeModal(result) {
+            modalOverlay.classList.remove('active');
+            if (modalResolve) {
+                modalResolve(result);
+                modalResolve = null;
+            }
+        }
+
+        modalCancel.addEventListener('click', () => closeModal(null));
+        modalOverlay.addEventListener('click', (e) => {
+            if (e.target === modalOverlay) closeModal(null);
+        });
+        modalConfirm.addEventListener('click', () => {
+            const form = modalForm;
+            const inputs = form.querySelectorAll('[name]');
+            const data = {};
+            inputs.forEach(inp => {
+                if (inp.type === 'checkbox') {
+                    data[inp.name] = inp.checked;
+                } else {
+                    data[inp.name] = inp.value;
+                }
+            });
+            // 处理多选checkbox
+            const checkboxes = form.querySelectorAll('input[type="checkbox"][name="teamMembers"]:checked');
+            if (checkboxes.length > 0) {
+                data.teamMemberIds = Array.from(checkboxes).map(cb => cb.value);
+            }
+            closeModal(data);
+        });
+
+        // ================================================================
+        // 6. 模态框操作
+        // ================================================================
+
+        async function openAddModal(group) {
+            const html = `
+                <label>成员姓名</label>
+                <input type="text" name="name" placeholder="请输入姓名" required />
+                <div class="hint">将添加到「${group}」</div>
+            `;
+            const result = await openModal(`➕ 添加成员 · ${group}`, html, '添加', 'success');
+            if (result && result.name && result.name.trim()) {
+                addMember(group, result.name.trim());
+                renderAll();
+            }
+        }
+
+        async function openEditModal(group, id, currentName) {
+            const html = `
+                <label>修改姓名</label>
+                <input type="text" name="name" value="${currentName}" required />
+                <div class="hint">当前班组：${group}</div>
+            `;
+            const result = await openModal(`✎ 编辑成员 · ${group}`, html, '保存', '');
+            if (result && result.name && result.name.trim() && result.name.trim() !== currentName) {
+                editMemberName(group, id, result.name.trim());
+                renderAll();
+            }
+        }
+
+        async function openDispatchSingleModal(group, id, name) {
+            let locOptions = presetLocations.map(l => `<option value="${l}">${l}</option>`).join('');
+            const now = new Date().toLocaleString('zh-CN', { hour12: false });
+            const html = `
+                <label>👤 派出 ${name}</label>
+                <label style="margin-top:8px;">📍 工作地点</label>
+                <select name="location" id="dispatchLocSelect">
+                    ${locOptions}
+                    <option value="__custom__">✏️ 自定义输入</option>
+                </select>
+                <input type="text" name="locationCustom" id="dispatchLocCustom" placeholder="输入具体地点" style="margin-top:6px;display:none;" />
+                <label style="margin-top:14px;">📋 任务描述（可选）</label>
+                <input type="text" name="taskName" placeholder="例如：检修阀门" />
+                <label style="margin-top:14px;">🕐 到达时间</label>
+                <input type="text" name="arriveTime" value="${now}" />
+                <div class="hint">默认为当前时间</div>
+            `;
+            const result = await openModal(`📤 派出 · ${name}`, html, '确认派出', 'out');
+            if (result) {
+                let location = result.location;
+                if (location === '__custom__') location = result.locationCustom || '';
+                if (!location.trim()) {
+                    alert('请选择或输入工作地点！');
+                    return;
+                }
+                const arriveTime = result.arriveTime || new Date().toLocaleString('zh-CN', { hour12: false });
+                dispatchTeam(group, [id], location.trim(), arriveTime, result.taskName || '');
+                renderAll();
+            }
+        }
+
+        // 多人派工模态框 - 优化版：显示已选人数和成员
+        async function openDispatchTeamModal(group) {
+            const members = getMembers(group);
+            const availableMembers = members.filter(m => m.status === 'in' || m.status === 'returned');
+
+            if (availableMembers.length === 0) {
+                alert('当前班组没有可派工的人员（在岗或已返回）。');
+                return;
+            }
+
+            let checkboxHtml = availableMembers.map(m =>
+                `<label>
+                    <input type="checkbox" name="teamMembers" value="${m.id}" />
+                    ${m.name} ${m.status === 'returned' ? '(已返)' : ''}
+                </label>`
+            ).join('');
+
+            let locOptions = presetLocations.map(l => `<option value="${l}">${l}</option>`).join('');
+            const now = new Date().toLocaleString('zh-CN', { hour12: false });
+
+            const html = `
+                <div style="margin-bottom:10px;color:var(--gray-600);">
+                    👥 选择本次任务的所有成员（可多选）
+                    <span style="display:inline-block;margin-left:12px;font-weight:600;color:var(--primary);" id="selectedCount">已选 0 人</span>
+                </div>
+                <div class="checkbox-grid" id="teamCheckboxGrid">
+                    ${checkboxHtml}
+                </div>
+                <label style="margin-top:14px;">📍 工作地点</label>
+                <select name="location" id="dispatchLocSelect2">
+                    ${locOptions}
+                    <option value="__custom__">✏️ 自定义输入</option>
+                </select>
+                <input type="text" name="locationCustom" id="dispatchLocCustom2" placeholder="输入具体地点" style="margin-top:6px;display:none;" />
+                <label style="margin-top:14px;">📋 任务描述（可选）</label>
+                <input type="text" name="taskName" placeholder="例如：大修机组" />
+                <label style="margin-top:14px;">🕐 到达时间</label>
+                <input type="text" name="arriveTime" value="${now}" />
+                <div class="hint">将同时派出所选中的所有成员</div>
+            `;
+
+            const result = await openModal(`👥 多人派工 · ${group}`, html, '确认派出', 'out');
+
+            // 在模态框打开后绑定复选框计数事件
+            setTimeout(() => {
+                const grid = document.getElementById('teamCheckboxGrid');
+                const countSpan = document.getElementById('selectedCount');
+                if (grid && countSpan) {
+                    const updateCount = () => {
+                        const checked = grid.querySelectorAll('input[type="checkbox"]:checked').length;
+                        countSpan.textContent = `已选 ${checked} 人`;
+                    };
+                    grid.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+                        cb.addEventListener('change', updateCount);
+                    });
+                    updateCount();
+                }
+            }, 50);
+
+            if (result) {
+                const selectedIds = result.teamMemberIds || [];
+                if (selectedIds.length === 0) {
+                    alert('请至少选择一位成员！');
+                    return;
+                }
+                let location = result.location;
+                if (location === '__custom__') location = result.locationCustom || '';
+                if (!location.trim()) {
+                    alert('请选择或输入工作地点！');
+                    return;
+                }
+                const arriveTime = result.arriveTime || new Date().toLocaleString('zh-CN', { hour12: false });
+                dispatchTeam(group, selectedIds, location.trim(), arriveTime, result.taskName || '');
+                renderAll();
+            }
+        }
+
+        // 监听地点切换
+        document.addEventListener('change', function(e) {
+            if (e.target.id === 'dispatchLocSelect' || e.target.id === 'dispatchLocSelect2') {
+                const customId = e.target.id === 'dispatchLocSelect' ? 'dispatchLocCustom' : 'dispatchLocCustom2';
+                const customInput = document.getElementById(customId);
+                if (customInput) {
+                    customInput.style.display = e.target.value === '__custom__' ? 'block' : 'none';
+                    if (e.target.value === '__custom__') customInput.focus();
+                }
+            }
+        });
+
+        async function openRecallModal(group, id, name) {
+            const now = new Date().toLocaleString('zh-CN', { hour12: false });
+            const html = `
+                <label>👤 ${name} · 召回</label>
+                <label style="margin-top:12px;">🕒 离开时间</label>
+                <input type="text" name="leaveTime" value="${now}" />
+                <div class="hint">默认为当前时间</div>
+            `;
+            const result = await openModal(`📥 召回 · ${name}`, html, '确认召回', 'success');
+            if (result) {
+                const leaveTime = result.leaveTime || new Date().toLocaleString('zh-CN', { hour12: false });
+                recallMember(group, id, leaveTime);
+                renderAll();
+            }
+        }
+
+        // ================================================================
+        // 7. 设置面板
+        // ================================================================
+
+        document.getElementById('openSettingsBtn').addEventListener('click', function() {
+            openSettingsModal();
+        });
+
+        async function openSettingsModal() {
+            let groupsHtml = '';
+            GROUP_NAMES.forEach(g => {
+                const members = getMembers(g);
+                let itemsHtml = members.map(m =>
+                    `<span class="settings-item">
+                        ${m.name}
+                        <button class="del-item" data-group="${g}" data-id="${m.id}" data-type="member">✕</button>
+                    </span>`
+                ).join('');
+                groupsHtml += `
+                    <div class="settings-section">
+                        <h4>👥 ${g} (${members.length}人)</h4>
+                        <div class="settings-item-list" id="memberList_${g}">
+                            ${itemsHtml || '<span class="text-muted">暂无成员</span>'}
+                        </div>
+                        <div class="settings-add-row">
+                            <input type="text" id="newMember_${g}" placeholder="输入姓名" />
+                            <button data-group="${g}" data-action="addMemberSetting">添加</button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            let locItemsHtml = presetLocations.map(l =>
+                `<span class="settings-item">
+                    ${l}
+                    <button class="del-item" data-location="${l}" data-type="location">✕</button>
+                </span>`
+            ).join('');
+
+            const html = `
+                <div style="margin-bottom:8px; color:var(--gray-600); font-size:14px;">
+                    管理成员和预设地点。人数不设上限，可随时添加或删除。
+                </div>
+                <div class="settings-toolbar">
+                    <button class="btn-default" data-action="restoreDefault">↩️ 恢复默认</button>
+                    <span style="font-size:13px; color:var(--gray-600); align-self:center;">
+                        数据存储于本地浏览器
+                    </span>
+                </div>
+                ${groupsHtml}
+                <div class="settings-section">
+                    <h4>📍 预设工作地点</h4>
+                    <div class="settings-item-list" id="locationList">
+                        ${locItemsHtml || '<span class="text-muted">暂无地点</span>'}
+                    </div>
+                    <div class="settings-add-row">
+                        <input type="text" id="newLocation" placeholder="输入地点名称" />
+                        <button data-action="addLocation">添加</button>
+                    </div>
+                </div>
+            `;
+
+            await openModal('⚙️ 系统设置', html, '关闭', '');
+            bindSettingsEvents();
+        }
+
+        function bindSettingsEvents() {
+            const modalForm = document.getElementById('modalForm');
+            if (window._settingsBound) {
+                modalForm.removeEventListener('click', settingsClickHandler);
+            }
+            modalForm.addEventListener('click', settingsClickHandler);
+            window._settingsBound = true;
+        }
+
+        function settingsClickHandler(e) {
+            const target = e.target.closest('button');
+            if (!target) return;
+
+            if (target.dataset.action === 'restoreDefault') {
+                if (restoreDefaultSettings()) {
+                    refreshSettingsModal();
+                }
+                return;
+            }
+
+            if (target.classList.contains('del-item')) {
+                const group = target.dataset.group;
+                const id = target.dataset.id;
+                const type = target.dataset.type;
+                const location = target.dataset.location;
+
+                if (type === 'member' && group && id) {
+                    if (confirm('确认删除该成员？')) {
+                        deleteMember(group, id);
+                        refreshSettingsModal();
+                    }
+                    return;
+                }
+                if (type === 'location' && location) {
+                    if (confirm(`确认删除地点「${location}」？`)) {
+                        const idx = presetLocations.indexOf(location);
+                        if (idx !== -1) {
+                            presetLocations.splice(idx, 1);
+                            saveData();
+                            refreshSettingsModal();
+                        }
+                    }
+                    return;
+                }
+            }
+
+            if (target.dataset.action === 'addMemberSetting') {
+                const group = target.dataset.group;
+                const input = document.getElementById(`newMember_${group}`);
+                if (input) {
+                    const name = input.value.trim();
+                    if (name) {
+                        addMember(group, name);
+                        input.value = '';
+                        refreshSettingsModal();
+                    } else {
+                        alert('请输入姓名');
+                    }
+                }
+                return;
+            }
+
+            if (target.dataset.action === 'addLocation') {
+                const input = document.getElementById('newLocation');
+                if (input) {
+                    const loc = input.value.trim();
+                    if (loc) {
+                        if (presetLocations.includes(loc)) {
+                            alert('该地点已存在');
+                            return;
+                        }
+                        presetLocations.push(loc);
+                        saveData();
+                        input.value = '';
+                        refreshSettingsModal();
+                    } else {
+                        alert('请输入地点名称');
+                    }
+                }
+                return;
+            }
+        }
+
+        function refreshSettingsModal() {
+            if (!modalOverlay.classList.contains('active')) return;
+            const modalForm = document.getElementById('modalForm');
+            let groupsHtml = '';
+            GROUP_NAMES.forEach(g => {
+                const members = getMembers(g);
+                let itemsHtml = members.map(m =>
+                    `<span class="settings-item">
+                        ${m.name}
+                        <button class="del-item" data-group="${g}" data-id="${m.id}" data-type="member">✕</button>
+                    </span>`
+                ).join('');
+                groupsHtml += `
+                    <div class="settings-section">
+                        <h4>👥 ${g} (${members.length}人)</h4>
+                        <div class="settings-item-list" id="memberList_${g}">
+                            ${itemsHtml || '<span class="text-muted">暂无成员</span>'}
+                        </div>
+                        <div class="settings-add-row">
+                            <input type="text" id="newMember_${g}" placeholder="输入姓名" />
+                            <button data-group="${g}" data-action="addMemberSetting">添加</button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            let locItemsHtml = presetLocations.map(l =>
+                `<span class="settings-item">
+                    ${l}
+                    <button class="del-item" data-location="${l}" data-type="location">✕</button>
+                </span>`
+            ).join('');
+
+            const html = `
+                <div style="margin-bottom:8px; color:var(--gray-600); font-size:14px;">
+                    管理成员和预设地点。人数不设上限，可随时添加或删除。
+                </div>
+                <div class="settings-toolbar">
+                    <button class="btn-default" data-action="restoreDefault">↩️ 恢复默认</button>
+                    <span style="font-size:13px; color:var(--gray-600); align-self:center;">
+                        数据存储于本地浏览器
+                    </span>
+                </div>
+                ${groupsHtml}
+                <div class="settings-section">
+                    <h4>📍 预设工作地点</h4>
+                    <div class="settings-item-list" id="locationList">
+                        ${locItemsHtml || '<span class="text-muted">暂无地点</span>'}
+                    </div>
+                    <div class="settings-add-row">
+                        <input type="text" id="newLocation" placeholder="输入地点名称" />
+                        <button data-action="addLocation">添加</button>
+                    </div>
+                </div>
+            `;
+            modalForm.innerHTML = html;
+        }
+
+        // ================================================================
+        // 8. 重置全部
+        // ================================================================
+
+        document.getElementById('resetTodayBtn').addEventListener('click', function() {
+            if (confirm('⚠️ 确定要重置全部三个班组的今日派出记录并取消所有休假吗？\n（人员名单保留，状态恢复为在岗）')) {
+                resetAllToday();
+                renderAll();
+            }
+        });
+
+        // ================================================================
+        // 9. 初始化
+        // ================================================================
+
+        loadData();
+        renderAll();
+
+        setInterval(() => {
+            document.getElementById('headerDate').textContent = '📅 ' + new Date().toLocaleDateString('zh-CN', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                weekday: 'short'
+            });
+        }, 60000);
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modalOverlay.classList.contains('active')) {
+                closeModal(null);
+            }
+        });
+
+        console.log('✅ 多人协作派工系统已启动！');
+        console.log('💡 支持多人同时派出，自动显示协作成员名单。');
+        console.log('💡 多人派工时可实时查看已选人数。');
+    </script>
+</body>
+</html>
